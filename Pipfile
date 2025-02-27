@@ -12,6 +12,9 @@ marshmallow = "*"
 colorama = "*"
 flask-cors = "*"
 psycopg2-binary = "*"
+numpy = "*"
+pillow = "*"
+imagehash = "*"
 
 [scripts]
 start = "python3 api/main.py"

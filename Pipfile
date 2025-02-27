@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+flask-restful = "*"
+python-dotenv = "*"
+marshmallow = "*"
+colorama = "*"
+flask-cors = "*"
+psycopg2-binary = "*"
+
+[scripts]
+start = "python3 api/main.py"
+test = "env ENV=test find tests -type f -name '*.py' -exec python3 -m unittest -v {} +"
+test-only = "env ONLY=true ENV=test find tests -type f -name '*.py' -exec python3 -m unittest -v {} +"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"

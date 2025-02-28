@@ -115,8 +115,8 @@ def verify_image(modification_id: str):
         reversed_image_path = os.path.join(uploads_dir, reversed_filename)
         reversed_img.save(reversed_image_path)
 
-        is_identical, is_modified_identical = compare_images(
-            original_img, reversed_img, modified_img
+        is_identical, is_modified_identical, ssim_modified, ssim_reversed = (
+            compare_images(original_img, reversed_img, modified_img)
         )
 
         status = (
@@ -134,7 +134,9 @@ def verify_image(modification_id: str):
             "data": {
                 "reversed_filename": reversed_filename,
                 "status": status,
-                "modified_status": is_modified_identical,
+                "modified_status": str(is_modified_identical),
+                "ssim_modified": ssim_modified,
+                "ssim_reversed": ssim_reversed,
             },
         }
 

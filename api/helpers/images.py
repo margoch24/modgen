@@ -3,6 +3,7 @@ import random
 import imagehash
 import numpy as np
 from PIL import Image
+from skimage.metrics import structural_similarity as ssim
 
 from config import DefaultConfig
 
@@ -73,21 +74,28 @@ def reverse_random_modifications(img, modifications):
     return Image.fromarray(img_array)
 
 
+def mse(imageA, imageB):
+    err = np.sum(
+        (np.array(imageA, dtype="float") - np.array(imageB, dtype="float")) ** 2
+    )
+    err /= float(imageA.size[0] * imageA.size[1])
+    return err
+
+
 def compare_images(
-    original_img,
-    reversed_img,
-    modified_img,
-    hash_size=32,
-    mse_threshold=500,
+    original_img, reversed_img, modified_img, hash_size=32, mse_threshold=1
 ):
-    hash1 = imagehash.whash(original_img, hash_size=hash_size)
-    hash2 = imagehash.whash(modified_img, hash_size=hash_size)
-    hash3 = imagehash.whash(reversed_img, hash_size=hash_size)
+    mse_modified = mse(original_img, modified_img)
+    mse_reversed = mse(original_img, reversed_img)
 
-    modified_hamming_distance = hash1 - hash2
-    hamming_distance = hash1 - hash3
+    original_gray = original_img.convert("L")
+    reversed_gray = reversed_img.convert("L")
+    modified_gray = modified_img.convert("L")
 
-    is_identical = hamming_distance == 0
-    is_modified_identical = modified_hamming_distance == 0
+    ssim_modified = ssim(np.array(original_gray), np.array(modified_gray))
+    ssim_reversed = ssim(np.array(original_gray), np.array(reversed_gray))
 
-    return is_identical, is_modified_identical
+    is_identical = mse_reversed < mse_threshold and ssim_reversed > 0.9999
+    is_modified_identical = mse_modified < mse_threshold and ssim_modified > 0.9999
+
+    return is_identical, is_modified_identical, ssim_modified, ssim_reversed

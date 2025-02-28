@@ -16,6 +16,7 @@ numpy = "*"
 pillow = "*"
 imagehash = "*"
 gunicorn = "*"
+scikit-image = "*"
 
 [scripts]
 start = "python3 api/main.py"

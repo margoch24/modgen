@@ -15,7 +15,12 @@ def list_directory_structure(start_path, indent_level=0):
 
         for entry in entries:
             # Skip directories that start with '__'
-            if entry.startswith("__"):
+            if (
+                entry.startswith("_")
+                or entry.startswith("tests")
+                or entry.startswith("xsf")
+                or entry.startswith("flask")
+            ):
                 continue
 
             full_path = os.path.join(start_path, entry)

@@ -25,6 +25,7 @@ class ImagesService:
     def verify_image(modification_id: str):
         return verify_image(modification_id)
 
+
 def print_elapsed_time(start_time, label):
     elapsed_time = (time.time() - start_time) * 1000  # Convert to milliseconds
     print(f"{label}: {elapsed_time:.2f} ms")
@@ -37,7 +38,7 @@ def modify_image(file: FileStorage):
     if file.filename == "":
         response = {"error": 1, "data": {"message": "No selected file"}}
         return response, 400
-    
+
     print_elapsed_time(start_time, "Before try")
 
     try:
@@ -62,10 +63,10 @@ def modify_image(file: FileStorage):
 
         original_img = Image.open(original_image_path)
         print_elapsed_time(start_time, "open image")
-    
+
         modified_img, modifications = apply_random_modifications(original_img)
 
-print_elapsed_time(start_time, "apply rundom modifications")
+        print_elapsed_time(start_time, "apply rundom modifications")
 
         modified_filename = f"modified_{original_filename}"
         modified_image_path = os.path.join(uploads_dir, modified_filename)

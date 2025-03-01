@@ -7,6 +7,7 @@ from config import DefaultConfig
 
 
 def delete_files():
+    print("started cronjob")
     current_dir = os.path.dirname(os.path.abspath(__file__))
     uploads_dir = os.path.join(current_dir, "../../uploads/")
 
@@ -16,12 +17,14 @@ def delete_files():
     files = os.listdir(uploads_dir)
 
     if not files:
+        print("no files found")
         return
 
     for filename in files:
         file_path = os.path.join(uploads_dir, filename)
         try:
             os.unlink(file_path)
+            print(f"Success to delete {file_path}")
         except Exception as e:
             print(f"Failed to delete {file_path}: {e}")
 

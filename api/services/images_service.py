@@ -42,11 +42,16 @@ def modify_image(file: FileStorage):
             os.makedirs(uploads_dir)
 
         secured_filename = secure_filename(file.filename).split(".")[0]
-        original_filename = f"{get_random(100000)}_{secured_filename}.png"
-        original_image_path = os.path.join(uploads_dir, original_filename)
-        file.save(original_image_path)
+        original_filename = f"{get_random(100000)}_{secured_filename}.bmp"
+        original_img_path = os.path.join(uploads_dir, original_filename)
 
-        original_img = Image.open(original_image_path)
+        original_img = Image.open(file.stream)
+
+        if original_img.mode == "RGBA":
+            original_img = original_img.convert("RGB")
+
+        original_img.save(original_img_path, format="BMP")
+
         modified_img, modifications = apply_random_modifications(original_img)
 
         modified_filename = f"modified_{original_filename}"

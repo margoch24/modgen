@@ -10,6 +10,7 @@ def delete_files():
     print("started cronjob")
     current_dir = os.path.dirname(os.path.abspath(__file__))
     uploads_dir = os.path.join(current_dir, "../../uploads/")
+    print(current_dir, uploads_dir)
 
     if not os.path.exists(uploads_dir):
         return

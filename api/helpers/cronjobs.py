@@ -24,7 +24,7 @@ def delete_files():
         file_path = os.path.join(uploads_dir, filename)
         try:
             os.unlink(file_path)
-            print(f"Failed to delete {file_path}")
+            print(f"Success to delete {file_path}")
         except Exception as e:
             print(f"Failed to delete {file_path}: {e}")
 
@@ -38,7 +38,7 @@ def set_cronjobs(app_context):
     scheduler.add_job(
         delete_files,
         trigger="interval",
-        minutes=10,
+        hours=1,
         job_id="delete_files",
     )
 

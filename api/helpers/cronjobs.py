@@ -14,6 +14,10 @@ def list_directory_structure(start_path, indent_level=0):
         indent = " " * (indent_level * 4)
 
         for entry in entries:
+            # Skip directories that start with '__'
+            if entry.startswith("__"):
+                continue
+
             full_path = os.path.join(start_path, entry)
             print(f"{indent}- {entry}")  # Print the entry name
             if os.path.isdir(full_path):  # Check if it's a directory

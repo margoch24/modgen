@@ -1,4 +1,5 @@
 import os
+import time
 
 from PIL import Image
 from werkzeug.datastructures import FileStorage
@@ -24,11 +25,20 @@ class ImagesService:
     def verify_image(modification_id: str):
         return verify_image(modification_id)
 
+def print_elapsed_time(start_time, label):
+    elapsed_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+    print(f"{label}: {elapsed_time:.2f} ms")
+
 
 def modify_image(file: FileStorage):
+    start_time = time.time()
+    print("start")
+
     if file.filename == "":
         response = {"error": 1, "data": {"message": "No selected file"}}
         return response, 400
+    
+    print_elapsed_time(start_time, "Before try")
 
     try:
         if not allowed_file(file.filename):
@@ -41,17 +51,27 @@ def modify_image(file: FileStorage):
         if not os.path.exists(uploads_dir):
             os.makedirs(uploads_dir)
 
+        print_elapsed_time(start_time, "Before secured filename")
+
         secured_filename = secure_filename(file.filename).split(".")[0]
         original_filename = f"{get_random(100000)}_{secured_filename}.png"
         original_image_path = os.path.join(uploads_dir, original_filename)
         file.save(original_image_path)
 
+        print_elapsed_time(start_time, "after saving original file")
+
         original_img = Image.open(original_image_path)
+        print_elapsed_time(start_time, "open image")
+    
         modified_img, modifications = apply_random_modifications(original_img)
+
+print_elapsed_time(start_time, "apply rundom modifications")
 
         modified_filename = f"modified_{original_filename}"
         modified_image_path = os.path.join(uploads_dir, modified_filename)
         modified_img.save(modified_image_path)
+
+        print_elapsed_time(start_time, "Save modified")
 
         modification = Modification.create(
             original_path=original_filename,
@@ -59,6 +79,8 @@ def modify_image(file: FileStorage):
             modification_data=modifications,
             verification_status=VerificationStatus.Pending,
         )
+
+        print_elapsed_time(start_time, "Save modification")
 
         response = {
             "error": 0,

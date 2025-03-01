@@ -8,6 +8,15 @@ from skimage.metrics import structural_similarity as ssim
 from config import DefaultConfig
 
 
+def resize_image(image):
+    width, height = image.size
+    if width <= DefaultConfig.MAX_WIDTH:
+        return image
+
+    new_height = int((DefaultConfig.MAX_WIDTH / width) * height)
+    return image.resize((DefaultConfig.MAX_WIDTH, new_height), Image.LANCZOS)
+
+
 def allowed_file(filename: str):
     if "." not in filename:
         return False

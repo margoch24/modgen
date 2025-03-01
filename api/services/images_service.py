@@ -10,6 +10,7 @@ from api.helpers.images import (
     allowed_file,
     apply_random_modifications,
     compare_images,
+    resize_image,
     reverse_random_modifications,
 )
 from api.models import Modification
@@ -44,10 +45,13 @@ def modify_image(file: FileStorage):
         secured_filename = secure_filename(file.filename).split(".")[0]
         original_filename = f"{get_random(100000)}_{secured_filename}.png"
         original_image_path = os.path.join(uploads_dir, original_filename)
-        file.save(original_image_path)
 
-        original_img = Image.open(original_image_path)
-        modified_img, modifications = apply_random_modifications(original_img)
+        original_img = Image.open(file.stream)
+
+        resized_img = resize_image(original_img)
+        resized_img.save(original_image_path)
+
+        modified_img, modifications = apply_random_modifications(resized_img)
 
         modified_filename = f"modified_{original_filename}"
         modified_image_path = os.path.join(uploads_dir, modified_filename)

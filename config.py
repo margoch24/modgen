@@ -22,7 +22,6 @@ class DefaultConfig:
     FRONTEND_API_URL = get_dotenv_val("FRONTEND_API_URL")
     UPLOAD_FOLDER = "uploads"
     ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg"]
-    MAX_WIDTH = 1000
 
 
 class FlaskAppConfig:

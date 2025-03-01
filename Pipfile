@@ -17,6 +17,7 @@ pillow = "*"
 imagehash = "*"
 gunicorn = "*"
 scikit-image = "*"
+apscheduler = "*"
 
 [scripts]
 start = "python3 api/main.py"

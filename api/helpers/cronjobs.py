@@ -35,7 +35,7 @@ def set_cronjobs(app_context):
     scheduler.add_job(
         delete_files,
         trigger="interval",
-        hours=1,
+        minutes=10,
         job_id="delete_files",
     )
 

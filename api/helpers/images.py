@@ -1,4 +1,5 @@
 import random
+from concurrent.futures import ThreadPoolExecutor
 
 import imagehash
 import numpy as np
@@ -74,28 +75,34 @@ def reverse_random_modifications(img, modifications):
     return Image.fromarray(img_array)
 
 
-def mse(imageA, imageB):
-    err = np.sum(
-        (np.array(imageA, dtype="float") - np.array(imageB, dtype="float")) ** 2
-    )
-    err /= float(imageA.size[0] * imageA.size[1])
-    return err
+def resize_image(img, target_size=(256, 256)):
+    if img.size[0] > target_size[0] or img.size[1] > target_size[1]:
+        return img.resize(target_size, Image.LANCZOS)
+
+    return img
 
 
-def compare_images(
-    original_img, reversed_img, modified_img, hash_size=32, mse_threshold=1
-):
-    mse_modified = mse(original_img, modified_img)
-    mse_reversed = mse(original_img, reversed_img)
+def compare_images(original_img, reversed_img, modified_img):
+    original_gray = resize_image(original_img.convert("L"))
+    reversed_gray = resize_image(reversed_img.convert("L"))
+    modified_gray = resize_image(modified_img.convert("L"))
 
-    original_gray = original_img.convert("L")
-    reversed_gray = reversed_img.convert("L")
-    modified_gray = modified_img.convert("L")
+    original_gray_np = np.asarray(original_gray, dtype=np.uint8)
+    reversed_gray_np = np.asarray(reversed_gray, dtype=np.uint8)
+    modified_gray_np = np.asarray(modified_gray, dtype=np.uint8)
 
-    ssim_modified = ssim(np.array(original_gray), np.array(modified_gray))
-    ssim_reversed = ssim(np.array(original_gray), np.array(reversed_gray))
+    with ThreadPoolExecutor() as executor:
+        ssim_modified_future = executor.submit(
+            ssim, original_gray_np, modified_gray_np, data_range=255
+        )
+        ssim_reversed_future = executor.submit(
+            ssim, original_gray_np, reversed_gray_np, data_range=255
+        )
 
-    is_identical = mse_reversed < mse_threshold and ssim_reversed > 0.9999
-    is_modified_identical = mse_modified < mse_threshold and ssim_modified > 0.9999
+        ssim_modified = ssim_modified_future.result()
+        ssim_reversed = ssim_reversed_future.result()
+
+    is_identical = ssim_reversed > 0.9999
+    is_modified_identical = ssim_modified > 0.9999
 
     return is_identical, is_modified_identical, ssim_modified, ssim_reversed

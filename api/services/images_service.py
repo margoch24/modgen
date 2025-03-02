@@ -95,8 +95,12 @@ def modify_image(file: FileStorage):
 
 
 def verify_image(modification_id: str):
+    start_time = time.time()
+    print("start")
     try:
         modification = Modification.find_one({"id": modification_id})
+
+        print_elapsed_time(start_time, "get modification db")
 
         if not modification:
             response = {
@@ -119,22 +123,32 @@ def verify_image(modification_id: str):
         if not os.path.exists(uploads_dir):
             os.makedirs(uploads_dir)
 
+        print_elapsed_time(start_time, "before paths db")
+
         modified_image_path = os.path.join(uploads_dir, modification.modified_path)
         original_image_path = os.path.join(uploads_dir, modification.original_path)
         modifications = modification.modification_data
 
+        print_elapsed_time(start_time, "get modufucations db")
+
         original_img = Image.open(original_image_path)
         modified_img = Image.open(modified_image_path)
+        print_elapsed_time(start_time, "open images db")
 
         reversed_img = reverse_random_modifications(modified_img, modifications)
+        print_elapsed_time(start_time, "reverse modification db")
 
         reversed_filename = f"reversed_{modification.original_path}"
         reversed_image_path = os.path.join(uploads_dir, reversed_filename)
         reversed_img.save(reversed_image_path)
 
+        print_elapsed_time(start_time, "save db")
+
         is_identical, is_modified_identical, ssim_modified, ssim_reversed = (
             compare_images(original_img, reversed_img, modified_img)
         )
+
+        print_elapsed_time(start_time, "cmpare db")
 
         status = (
             VerificationStatus.Success
@@ -142,9 +156,13 @@ def verify_image(modification_id: str):
             else VerificationStatus.Fail
         )
 
+        print_elapsed_time(start_time, "before update db")
+
         Modification.update_one(
             modification.id, reversed_path=reversed_filename, verification_status=status
         )
+
+        print_elapsed_time(start_time, "after update db")
 
         response = {
             "error": 0,

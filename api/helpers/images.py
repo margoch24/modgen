@@ -1,5 +1,6 @@
 import random
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import imagehash
 import numpy as np
@@ -83,6 +84,11 @@ def mse(imageA, imageB):
     return err
 
 
+def resize_image(img, size=(256, 256)):
+    """Resize image to a smaller size to speed up SSIM calculation."""
+    return img.resize(size, Image.LANCZOS)
+
+
 def print_elapsed_time(start_time, label):
     elapsed_time = (time.time() - start_time) * 1000  # Convert to milliseconds
     print(f"{label}: {elapsed_time:.2f} ms")
@@ -93,21 +99,36 @@ def compare_images(
 ):
     start_time = time.time()
     print("start")
-    print_elapsed_time(start_time, "modified db")
-    print_elapsed_time(start_time, "reversed db")
 
-    original_gray = original_img.convert("L")
-    reversed_gray = reversed_img.convert("L")
-    modified_gray = modified_img.convert("L")
-    print_elapsed_time(start_time, "gray convert db")
+    # Resize images before processing
+    original_gray = resize_image(original_img.convert("L"))
+    reversed_gray = resize_image(reversed_img.convert("L"))
+    modified_gray = resize_image(modified_img.convert("L"))
+    print_elapsed_time(start_time, "Gray conversion & resize")
 
-    ssim_modified = ssim(np.array(original_gray), np.array(modified_gray))
-    print_elapsed_time(start_time, "modified ssim  db")
-    ssim_reversed = ssim(np.array(original_gray), np.array(reversed_gray))
-    print_elapsed_time(start_time, "reversed ssim db")
+    # Convert to NumPy arrays efficiently
+    original_gray_np = np.asarray(original_gray, dtype=np.uint8)
+    reversed_gray_np = np.asarray(reversed_gray, dtype=np.uint8)
+    modified_gray_np = np.asarray(modified_gray, dtype=np.uint8)
+    print_elapsed_time(start_time, "NumPy conversion")
 
+    # Compute SSIM in parallel to speed up processing
+    with ThreadPoolExecutor() as executor:
+        ssim_modified_future = executor.submit(
+            ssim, original_gray_np, modified_gray_np, data_range=255
+        )
+        ssim_reversed_future = executor.submit(
+            ssim, original_gray_np, reversed_gray_np, data_range=255
+        )
+
+        ssim_modified = ssim_modified_future.result()
+        ssim_reversed = ssim_reversed_future.result()
+
+    print_elapsed_time(start_time, "SSIM calculations")
+
+    # Determine if images are identical based on SSIM
     is_identical = ssim_reversed > 0.9999
     is_modified_identical = ssim_modified > 0.9999
-    print_elapsed_time(start_time, "identical db")
+    print_elapsed_time(start_time, "Final comparison")
 
     return is_identical, is_modified_identical, ssim_modified, ssim_reversed

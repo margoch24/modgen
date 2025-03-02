@@ -83,8 +83,6 @@ def modify_image(file: FileStorage):
 
 
 def verify_image(modification_id: str):
-    start_time = time.time()
-    print("start")
     try:
         modification = Modification.find_one({"id": modification_id})
 

@@ -1,4 +1,5 @@
 import os
+import time
 
 from PIL import Image
 from werkzeug.datastructures import FileStorage
@@ -16,6 +17,11 @@ from api.models import Modification
 from config import DefaultConfig
 
 
+def print_elapsed_time(start_time, label):
+    elapsed_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+    print(f"{label}: {elapsed_time:.2f} ms")
+
+
 class ImagesService:
 
     def modify_image(file: FileStorage):
@@ -26,6 +32,8 @@ class ImagesService:
 
 
 def modify_image(file: FileStorage):
+    start_time = time.time()
+    print("start")
     if file.filename == "":
         response = {"error": 1, "data": {"message": "No selected file"}}
         return response, 400
@@ -58,19 +66,23 @@ def modify_image(file: FileStorage):
         modified_image_path = os.path.join(uploads_dir, modified_filename)
         modified_img.save(modified_image_path)
 
-        modification = Modification.create(
-            original_path=original_filename,
-            modified_path=modified_filename,
-            modification_data=modifications,
-            verification_status=VerificationStatus.Pending,
-        )
+        print_elapsed_time(start_time, "before db")
+
+        # modification = Modification.create(
+        #     original_path=original_filename,
+        #     modified_path=modified_filename,
+        #     modification_data=modifications,
+        #     verification_status=VerificationStatus.Pending,
+        # )
+
+        print_elapsed_time(start_time, "after db")
 
         response = {
             "error": 0,
             "data": {
                 "original_filename": original_filename,
                 "modified_filename": modified_filename,
-                "modification_id": modification.id,
+                # "modification_id": modification.id,
             },
         }
         return response, 200

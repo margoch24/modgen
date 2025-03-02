@@ -1,7 +1,6 @@
 import random
-from concurrent.futures import ThreadPoolExecutor
+import time
 
-import cv2
 import imagehash
 import numpy as np
 from PIL import Image
@@ -84,32 +83,33 @@ def mse(imageA, imageB):
     return err
 
 
-def pil_to_gray_cv(img):
-    return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2GRAY)
+def print_elapsed_time(start_time, label):
+    elapsed_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+    print(f"{label}: {elapsed_time:.2f} ms")
 
 
 def compare_images(
     original_img, reversed_img, modified_img, hash_size=32, mse_threshold=1
 ):
-    mse_mod = mse(original_img, modified_img)
-    mse_rev = mse(original_img, reversed_img)
+    start_time = time.time()
+    print("start")
+    mse_modified = mse(original_img, modified_img)
+    print_elapsed_time(start_time, "modified db")
+    mse_reversed = mse(original_img, reversed_img)
+    print_elapsed_time(start_time, "reversed db")
 
-    original_gray = pil_to_gray_cv(original_img)
-    reversed_gray = pil_to_gray_cv(reversed_img)
-    modified_gray = pil_to_gray_cv(modified_img)
+    original_gray = original_img.convert("L")
+    reversed_gray = reversed_img.convert("L")
+    modified_gray = modified_img.convert("L")
+    print_elapsed_time(start_time, "gray convert db")
 
-    with ThreadPoolExecutor() as executor:
-        ssim_mod_future = executor.submit(
-            ssim, np.array(original_gray), np.array(modified_gray)
-        )
-        ssim_rev_future = executor.submit(
-            ssim, np.array(original_gray), np.array(reversed_gray)
-        )
+    ssim_modified = ssim(np.array(original_gray), np.array(modified_gray))
+    print_elapsed_time(start_time, "modified ssim  db")
+    ssim_reversed = ssim(np.array(original_gray), np.array(reversed_gray))
+    print_elapsed_time(start_time, "reversed ssim db")
 
-    ssim_mod = ssim_mod_future.result()
-    ssim_rev = ssim_rev_future.result()
+    is_identical = mse_reversed < mse_threshold and ssim_reversed > 0.9999
+    is_modified_identical = mse_modified < mse_threshold and ssim_modified > 0.9999
+    print_elapsed_time(start_time, "identical db")
 
-    is_identical = mse_rev < mse_threshold and ssim_rev > 0.9999
-    is_modified_identical = mse_mod < mse_threshold and ssim_mod > 0.9999
-
-    return is_identical, is_modified_identical, ssim_mod, ssim_rev
+    return is_identical, is_modified_identical, ssim_modified, ssim_reversed

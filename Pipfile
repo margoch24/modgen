@@ -18,7 +18,6 @@ imagehash = "*"
 gunicorn = "*"
 scikit-image = "*"
 apscheduler = "*"
-opencv-python = "*"
 
 [scripts]
 start = "python3 api/main.py"

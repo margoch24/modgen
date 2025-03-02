@@ -93,9 +93,7 @@ def compare_images(
 ):
     start_time = time.time()
     print("start")
-    mse_modified = mse(original_img, modified_img)
     print_elapsed_time(start_time, "modified db")
-    mse_reversed = mse(original_img, reversed_img)
     print_elapsed_time(start_time, "reversed db")
 
     original_gray = original_img.convert("L")
@@ -108,8 +106,8 @@ def compare_images(
     ssim_reversed = ssim(np.array(original_gray), np.array(reversed_gray))
     print_elapsed_time(start_time, "reversed ssim db")
 
-    is_identical = mse_reversed < mse_threshold and ssim_reversed > 0.9999
-    is_modified_identical = mse_modified < mse_threshold and ssim_modified > 0.9999
+    is_identical = ssim_reversed > 0.9999
+    is_modified_identical = ssim_modified > 0.9999
     print_elapsed_time(start_time, "identical db")
 
     return is_identical, is_modified_identical, ssim_modified, ssim_reversed

@@ -76,12 +76,12 @@ def modify_image(file: FileStorage):
         print_elapsed_time(start_time, "save modified image")
 
         # Save modification metadata
-        # modification = Modification.create(
-        #     original_path=original_filename,
-        #     modified_path=modified_filename,
-        #     modification_data=modifications,
-        #     verification_status=VerificationStatus.Pending,
-        # )
+        modification = Modification.create(
+            original_path=original_filename,
+            modified_path=modified_filename,
+            modification_data=modifications,
+            verification_status=VerificationStatus.Pending,
+        )
         print_elapsed_time(start_time, "save modification record")
 
         response = {
@@ -89,7 +89,7 @@ def modify_image(file: FileStorage):
             "data": {
                 "original_filename": original_filename,
                 "modified_filename": modified_filename,
-                # "modification_id": modification.id,
+                "modification_id": modification.id,
             },
         }
         return response, 200

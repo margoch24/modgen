@@ -47,7 +47,7 @@ def apply_random_modifications(img, num_mods=100):
                 )
             )
 
-        elif mod_type == "invert":
+        else:
             y, x = random.randint(0, height - 1), random.randint(0, width - 1)
             img_array[y, x] = 255 - img_array[y, x]
             modifications.append(("invert", (y, x)))

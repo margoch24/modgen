@@ -27,7 +27,7 @@ class ImagesService:
 
 
 def print_elapsed_time(start_time, label):
-    print(f"{label}: {time.time() - start_time:.4f} seconds")
+    print(f"{label}: {(time.time() - start_time) * 1000:.2f} ms")
 
 
 def modify_image(file: FileStorage):
@@ -35,56 +35,54 @@ def modify_image(file: FileStorage):
     print("start")
 
     if file.filename == "":
-        response = {"error": 1, "data": {"message": "No selected file"}}
-        return response, 400
+        return {"error": 1, "data": {"message": "No selected file"}}, 400
+
+    if not allowed_file(file.filename):
+        return {"error": 1, "data": {"message": "Invalid file type"}}, 400
 
     try:
-        if not allowed_file(file.filename):
-            response = {"error": 1, "data": {"message": "Invalid file type"}}
-            return response, 400
+        print_elapsed_time(start_time, "file validation")
 
-        print_elapsed_time(start_time, "not allowed filename")
-
+        # Ensure upload directory exists
         current_dir = os.path.dirname(os.path.abspath(__file__))
         uploads_dir = os.path.join(current_dir, f"../../{DefaultConfig.UPLOAD_FOLDER}/")
 
-        if not os.path.exists(uploads_dir):
-            os.makedirs(uploads_dir)
+        os.makedirs(uploads_dir, exist_ok=True)
+        print_elapsed_time(start_time, "ensure upload dir")
 
-        print_elapsed_time(start_time, "no dir")
-
-        secured_filename = secure_filename(file.filename).split(".")[0]
-        original_filename = f"{get_random(100000)}_{secured_filename}.bmp"
-        original_img_path = os.path.join(uploads_dir, original_filename)
-
-        print_elapsed_time(start_time, "filename")
-
-        original_img = Image.open(file.stream)
-        print_elapsed_time(start_time, "open image")
-
-        if original_img.mode == "RGBA":
-            original_img = original_img.convert("RGB")
-        print_elapsed_time(start_time, "convert to rgb")
-
-        original_img.save(original_img_path, format="BMP")
-        print_elapsed_time(start_time, "save img")
-
-        modified_img, modifications = apply_random_modifications(original_img)
-        print_elapsed_time(start_time, "apply random modif")
-
+        # Secure filename
+        filename_base = secure_filename(file.filename).rsplit(".", 1)[0]
+        unique_id = get_random(100000)
+        original_filename = f"{unique_id}_{filename_base}.bmp"
         modified_filename = f"modified_{original_filename}"
-        modified_image_path = os.path.join(uploads_dir, modified_filename)
-        modified_img.save(modified_image_path)
-        print_elapsed_time(start_time, "save img")
 
+        original_img_path = os.path.join(uploads_dir, original_filename)
+        modified_img_path = os.path.join(uploads_dir, modified_filename)
+
+        # Load image in memory & convert immediately
+        original_img = Image.open(file.stream).convert("RGB")
+        print_elapsed_time(start_time, "open & convert image")
+
+        # Save original image efficiently
+        original_img.save(original_img_path, format="BMP", optimize=True)
+        print_elapsed_time(start_time, "save original image")
+
+        # Apply modifications using optimized method
+        modified_img, modifications = apply_random_modifications(original_img)
+        print_elapsed_time(start_time, "apply modifications")
+
+        # Save modified image efficiently
+        modified_img.save(modified_img_path, format="BMP", optimize=True)
+        print_elapsed_time(start_time, "save modified image")
+
+        # Save modification metadata
         modification = Modification.create(
             original_path=original_filename,
             modified_path=modified_filename,
             modification_data=modifications,
             verification_status=VerificationStatus.Pending,
         )
-
-        print_elapsed_time(start_time, "save modificatio")
+        print_elapsed_time(start_time, "save modification record")
 
         response = {
             "error": 0,

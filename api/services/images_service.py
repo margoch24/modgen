@@ -27,7 +27,7 @@ class ImagesService:
 
 
 def print_elapsed_time(start_time, label):
-    print(f"{label}: {time.time() - start_time:.4f} seconds")
+    print(f"{label}: {(time.time() - start_time) * 1000:.2f} ms")
 
 
 def modify_image(file: FileStorage):

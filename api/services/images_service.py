@@ -1,5 +1,4 @@
 import os
-import time
 
 from PIL import Image
 from werkzeug.datastructures import FileStorage
@@ -26,31 +25,21 @@ class ImagesService:
         return verify_image(modification_id)
 
 
-def print_elapsed_time(start_time, label):
-    print(f"{label}: {(time.time() - start_time) * 1000:.2f} ms")
-
-
 def modify_image(file: FileStorage):
-    start_time = time.time()
-    print("start")
-
     if file.filename == "":
-        return {"error": 1, "data": {"message": "No selected file"}}, 400
+        response = {"error": 1, "data": {"message": "No selected file"}}
+        return response, 400
 
     if not allowed_file(file.filename):
-        return {"error": 1, "data": {"message": "Invalid file type"}}, 400
+        response = {"error": 1, "data": {"message": "Invalid file type"}}
+        return response, 400
 
     try:
-        print_elapsed_time(start_time, "file validation")
-
-        # Ensure upload directory exists
         current_dir = os.path.dirname(os.path.abspath(__file__))
         uploads_dir = os.path.join(current_dir, f"../../{DefaultConfig.UPLOAD_FOLDER}/")
 
         os.makedirs(uploads_dir, exist_ok=True)
-        print_elapsed_time(start_time, "ensure upload dir")
 
-        # Secure filename
         filename_base = secure_filename(file.filename).rsplit(".", 1)[0]
         unique_id = get_random(100000)
         original_filename = f"{unique_id}_{filename_base}.bmp"
@@ -59,30 +48,20 @@ def modify_image(file: FileStorage):
         original_img_path = os.path.join(uploads_dir, original_filename)
         modified_img_path = os.path.join(uploads_dir, modified_filename)
 
-        # Load image in memory & convert immediately
         original_img = Image.open(file.stream).convert("RGB")
-        print_elapsed_time(start_time, "open & convert image")
 
-        # Save original image efficiently
         original_img.save(original_img_path, format="BMP", optimize=True)
-        print_elapsed_time(start_time, "save original image")
 
-        # Apply modifications using optimized method
         modified_img, modifications = apply_random_modifications(original_img)
-        print_elapsed_time(start_time, "apply modifications")
 
-        # Save modified image efficiently
         modified_img.save(modified_img_path, format="BMP", optimize=True)
-        print_elapsed_time(start_time, "save modified image")
 
-        # Save modification metadata
         modification = Modification.create(
             original_path=original_filename,
             modified_path=modified_filename,
             modification_data=modifications,
             verification_status=VerificationStatus.Pending,
         )
-        print_elapsed_time(start_time, "save modification record")
 
         response = {
             "error": 0,

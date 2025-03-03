@@ -30,33 +30,31 @@ def modify_image(file: FileStorage):
         response = {"error": 1, "data": {"message": "No selected file"}}
         return response, 400
 
-    try:
-        if not allowed_file(file.filename):
-            response = {"error": 1, "data": {"message": "Invalid file type"}}
-            return response, 400
+    if not allowed_file(file.filename):
+        response = {"error": 1, "data": {"message": "Invalid file type"}}
+        return response, 400
 
+    try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         uploads_dir = os.path.join(current_dir, f"../../{DefaultConfig.UPLOAD_FOLDER}/")
 
-        if not os.path.exists(uploads_dir):
-            os.makedirs(uploads_dir)
+        os.makedirs(uploads_dir, exist_ok=True)
 
-        secured_filename = secure_filename(file.filename).split(".")[0]
-        original_filename = f"{get_random(100000)}_{secured_filename}.bmp"
+        filename_base = secure_filename(file.filename).rsplit(".", 1)[0]
+        unique_id = get_random(100000)
+        original_filename = f"{unique_id}_{filename_base}.bmp"
+        modified_filename = f"modified_{original_filename}"
+
         original_img_path = os.path.join(uploads_dir, original_filename)
+        modified_img_path = os.path.join(uploads_dir, modified_filename)
 
-        original_img = Image.open(file.stream)
+        original_img = Image.open(file.stream).convert("RGB")
 
-        if original_img.mode == "RGBA":
-            original_img = original_img.convert("RGB")
-
-        original_img.save(original_img_path, format="BMP")
+        original_img.save(original_img_path, format="BMP", optimize=True)
 
         modified_img, modifications = apply_random_modifications(original_img)
 
-        modified_filename = f"modified_{original_filename}"
-        modified_image_path = os.path.join(uploads_dir, modified_filename)
-        modified_img.save(modified_image_path)
+        modified_img.save(modified_img_path, format="BMP", optimize=True)
 
         modification = Modification.create(
             original_path=original_filename,

@@ -1,4 +1,5 @@
 import os
+import time
 
 from PIL import Image
 from werkzeug.datastructures import FileStorage
@@ -25,7 +26,14 @@ class ImagesService:
         return verify_image(modification_id)
 
 
+def print_elapsed_time(start_time, label):
+    print(f"{label}: {time.time() - start_time:.4f} seconds")
+
+
 def modify_image(file: FileStorage):
+    start_time = time.time()
+    print("start")
+
     if file.filename == "":
         response = {"error": 1, "data": {"message": "No selected file"}}
         return response, 400
@@ -35,28 +43,39 @@ def modify_image(file: FileStorage):
             response = {"error": 1, "data": {"message": "Invalid file type"}}
             return response, 400
 
+        print_elapsed_time(start_time, "not allowed filename")
+
         current_dir = os.path.dirname(os.path.abspath(__file__))
         uploads_dir = os.path.join(current_dir, f"../../{DefaultConfig.UPLOAD_FOLDER}/")
 
         if not os.path.exists(uploads_dir):
             os.makedirs(uploads_dir)
 
+        print_elapsed_time(start_time, "no dir")
+
         secured_filename = secure_filename(file.filename).split(".")[0]
         original_filename = f"{get_random(100000)}_{secured_filename}.bmp"
         original_img_path = os.path.join(uploads_dir, original_filename)
 
+        print_elapsed_time(start_time, "filename")
+
         original_img = Image.open(file.stream)
+        print_elapsed_time(start_time, "open image")
 
         if original_img.mode == "RGBA":
             original_img = original_img.convert("RGB")
+        print_elapsed_time(start_time, "convert to rgb")
 
         original_img.save(original_img_path, format="BMP")
+        print_elapsed_time(start_time, "save img")
 
         modified_img, modifications = apply_random_modifications(original_img)
+        print_elapsed_time(start_time, "apply random modif")
 
         modified_filename = f"modified_{original_filename}"
         modified_image_path = os.path.join(uploads_dir, modified_filename)
         modified_img.save(modified_image_path)
+        print_elapsed_time(start_time, "save img")
 
         modification = Modification.create(
             original_path=original_filename,
@@ -64,6 +83,8 @@ def modify_image(file: FileStorage):
             modification_data=modifications,
             verification_status=VerificationStatus.Pending,
         )
+
+        print_elapsed_time(start_time, "save modificatio")
 
         response = {
             "error": 0,
